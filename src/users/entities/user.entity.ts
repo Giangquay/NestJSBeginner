@@ -10,4 +10,11 @@ export class Users {
 
     @Column({type : 'varchar', length:255 })
     password:string;
+
+    @Column({type: 'date'})
+    createdate:Date;
+
+
+    @Column({type:'date'})
+    updatedate:Date;
 }

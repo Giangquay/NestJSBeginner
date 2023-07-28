@@ -13,8 +13,10 @@ export class UsersService {
 
   async create(createUserDto: CreateUserDto):Promise<Users>{
     const user: Users = new Users(); 
+    let dateNow = new Date();
     user.email = createUserDto.email;
     user.password = createUserDto.password;
+    user.createdate = dateNow;
     if(await this.userRepository.findOneBy({email: `${user.email}`}))
     {
       throw new BadRequestException('Email da ton tai.');
@@ -35,9 +37,12 @@ export class UsersService {
 
   async validatePassword(userId: number,oldPassword: string,newPassword:string):Promise<Users>{
     const user: Users = new Users();
+    let dateNow = new Date();
     const userKT = await this.userRepository.findOneBy({id: userId});
     if(userKT&&userKT.password===oldPassword)
     {
+      user.id=userId;
+      user.updatedate = dateNow;
       user.password = newPassword;
       this.userRepository.save(user);
       this.logger.log("1");
@@ -45,7 +50,6 @@ export class UsersService {
     }else{
       throw new BadRequestException('mật khẩu không khớp');
     }
-    
   }
 
   findOne(id: number): Promise<Users> {
