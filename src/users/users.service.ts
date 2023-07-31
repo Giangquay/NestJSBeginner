@@ -12,32 +12,53 @@ export class UsersService {
     @InjectRepository(Users) private readonly userRepository: Repository<Users>,
   ) { }
 
-  create(createUserDto: CreateUserDto): Promise<Users> {
+  async create(createUserDto: CreateUserDto): Promise<Users> {
     const user: Users = new Users();
     let dateNow = new Date();
     user.email = createUserDto.email.trim();
     user.password = createUserDto.password.trim();
     user.createdate = dateNow;
-    if (this.userRepository.findOneBy({ email: `${user.email}` })) {
-      throw new BadRequestException('Email đã tồn tại vui lòng đổi email khác');
+    const foundUser = await this.userRepository.findOneBy({ email: user.email })
+    console.log(foundUser);
+    if (foundUser==null) {
+      await this.userRepository.save(user);
+      delete user.password;// Xóa password ở user để không hiển thị 
+      return user;
     } else {
-      return this.userRepository.save(user);
+      throw new BadRequestException('Email đã tồn tại vui lòng đổi email khác');
     }
   }
 
-  async loginUser(createUserDto: CreateUserDto): Promise<Users> {
+  async validateEmailUser(email:string){
+    const foundUser = await this.userRepository.findOneBy({ email: email })
+    if(foundUser)
+    {
+      return true;
+    }
+    return false;
+  }
+
+  async loginUser(createUserDto: CreateUserDto): Promise<Users>{
     const user: Users = new Users();
     user.email = createUserDto.email.trim();
     user.password = createUserDto.password.trim();
-    const foundUser = await this.userRepository.findOneBy({ email: user.email, password: user.password });
+    const foundEmailUser = await this.validateEmailUser(user.email);
+    if(foundEmailUser==true)
+    {
+      const foundUser = await this.userRepository.findOneBy({ email: user.email, password: user.password });
       if (foundUser == null) {
-        throw new HttpException("Tên tài khoản của bạn hoặc Mật khẩu không đúng, vui lòng thử lại", HttpStatus.BAD_REQUEST);
+        throw new HttpException("Email hoặc Mật khẩu của bạn không đúng, vui lòng thử lại", HttpStatus.BAD_REQUEST);
       } else {
+        delete foundUser.password;
         return foundUser;
       }
+    }else{
+      throw new HttpException("Email không có trong hệ thống",HttpStatus.BAD_REQUEST);
+    }
+    
   }
 
-  async validatePassword(userId: number, oldPassword: string, newPassword: string): Promise<any> {
+  async ChangePassword(userId: number, oldPassword: string, newPassword: string): Promise<Users> {
     const user: Users = new Users();
     let dateNow = new Date();
     const userKT = await this.userRepository.findOneBy({ id: userId });
@@ -45,17 +66,12 @@ export class UsersService {
       user.id = userId;
       user.updatedate = dateNow;
       user.password = newPassword.trim();
-      this.userRepository.save(user);
-      return JSON.stringify({ message: 'Sửa thành công' })
+      await this.userRepository.save(user);
+      delete user.password;
+      return  user;
     } else {
       throw new BadRequestException('mật khẩu không khớp');
     }
   }
 
-  findOne(id: number): Promise<Users> {
-    return this.userRepository.findOneBy({ id });
-  }
-  remove(id: number): Promise<{ affected?: number }> {
-    return this.userRepository.delete(id);
-  }
 }

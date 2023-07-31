@@ -10,21 +10,8 @@ export class UsersController {
   // TODO: Tạo User
   @Post()
   @UsePipes(ValidationPipe)
-  create(@Body() createUserDto: CreateUserDto) {
+  create(@Body() createUserDto: CreateUserDto) { 
     return this.usersService.create(createUserDto);
-  }
-
-
-  //TODO: Tìm kiếm User
-  @Get(':id')
-  findOne(@Param('id') id: number) {
-    return this.usersService.findOne(+id);
-  }
-
-  //TODO: Xóa User
-  @Delete(':id')
-  remove(@Param('id') id: number) {
-    return this.usersService.remove(+id);
   }
 
   //TODO: Đăng nhập 
@@ -40,6 +27,6 @@ export class UsersController {
    changePassword(@Param('id') id: string,@Body() body: { oldPassword: string; newPassword: string })
   {
     const { oldPassword, newPassword } = body;
-    return this.usersService.validatePassword(+id,oldPassword,newPassword);
+    return this.usersService.ChangePassword(+id,oldPassword,newPassword);
   }
 }
