@@ -29,4 +29,10 @@ export class UsersController {
     const { oldPassword, newPassword } = body;
     return this.usersService.ChangePassword(+id,oldPassword,newPassword);
   }
+
+  @Get('/list')
+  getAll()
+  {
+    return this.usersService.getAllUsers();
+  }
 }

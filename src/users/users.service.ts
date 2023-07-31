@@ -50,6 +50,7 @@ export class UsersService {
         throw new HttpException("Email hoặc Mật khẩu của bạn không đúng, vui lòng thử lại", HttpStatus.BAD_REQUEST);
       } else {
         delete foundUser.password;
+        delete foundUser.updatedate;
         return foundUser;
       }
     }else{
@@ -74,4 +75,11 @@ export class UsersService {
     }
   }
 
+
+  async getAllUsers():Promise<Users[]>{
+
+    // console.log( await this.userRepository.query("SELECT * FROM users"));
+    console.log( await this.userRepository.createQueryBuilder("users").orderBy("users.id"));
+    return await this.userRepository.createQueryBuilder("users").orderBy("users.id").getMany();
+  }
 }
