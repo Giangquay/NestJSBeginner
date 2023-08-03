@@ -1,20 +1,27 @@
-import { Entity,Column,PrimaryGeneratedColumn ,PrimaryColumn} from "typeorm";
+import { Postinfo } from "src/postinfo/entities/postinfo.entity";
+import { Entity,Column,PrimaryGeneratedColumn ,PrimaryColumn, ManyToOne, OneToMany, CreateDateColumn} from "typeorm";
 @Entity('users')
 export class Users {
 
-    @PrimaryGeneratedColumn()
+    @PrimaryGeneratedColumn({name :'id'})
     id:number;
 
     @Column({nullable:false, type: 'varchar', length: 255 })
     email!:string;
 
-    @Column({type : 'varchar', length:255 })
+    @Column({name:'username',type :'varchar',length:255,nullable:true})
+    username:string
+
+    @Column({type : 'varchar', length:255 ,nullable:false})
     password:string;
 
-    @Column({type: 'date'})
+    @CreateDateColumn()
     createdate:Date;
 
 
-    @Column({type:'date'})
+    @CreateDateColumn()
     updatedate:Date;
+
+    @OneToMany(()=>Postinfo,(post)=>post.user)
+    post:Postinfo[]
 }

@@ -5,6 +5,7 @@ import {ConfigModule, ConfigService} from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import {Users} from './users/entities/user.entity'
 import { UsersModule } from "./users/users.module";
+import { PostinfoModule } from './postinfo/postinfo.module';
 @Module({
   imports: [
     TypeOrmModule.forRoot({
@@ -13,12 +14,13 @@ import { UsersModule } from "./users/users.module";
         port: 5432,
         password: '123456',
         username: 'postgres',
-        entities: [Users],
-        database: 'testdb',
-        synchronize: false,
+        entities: ['dist/**/*.entity.js'],
+        database: 'TableTest',
+        synchronize: true,
         logging: true,
     }),
-    UsersModule
+    UsersModule,
+    PostinfoModule,
   ],
   controllers: [AppController],//Noi import module
   providers: [AppService],//Noi import service

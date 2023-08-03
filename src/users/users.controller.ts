@@ -35,4 +35,11 @@ export class UsersController {
   {
     return this.usersService.getAllUsers();
   }
+
+  @Put('/info/:id')
+  changeName(@Param('id') id: string,@Body() body:{username: string})
+  {
+    const name = body.username;
+    return this.usersService.changeNameUser(+id,name);
+  } 
 }
