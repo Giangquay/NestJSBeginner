@@ -6,7 +6,7 @@ export class CreateLikeDto{
     id:string;
 
     
-    user:number;
+    user:string;
 
     post:string;
 }

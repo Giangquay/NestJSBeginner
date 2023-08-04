@@ -3,8 +3,8 @@ import { Entity,Column,PrimaryGeneratedColumn ,PrimaryColumn, ManyToOne, OneToMa
 @Entity('users')
 export class Users {
 
-    @PrimaryGeneratedColumn({name :'id'})
-    id:number;
+    @PrimaryGeneratedColumn('uuid')
+    id:string;
 
     @Column({nullable:false, type: 'varchar', length: 255 })
     email!:string;
@@ -15,11 +15,11 @@ export class Users {
     @Column({type : 'varchar', length:255 ,nullable:false})
     password:string;
 
-    @CreateDateColumn()
+    @Column({name: 'created',type :'date',default :new Date()})
     createdate:Date;
 
 
-    @CreateDateColumn()
+    @Column({name: 'updateat',type :'date',default :new Date()})
     updatedate:Date;
 
     @OneToMany(()=>Postinfo,(post)=>post.user)

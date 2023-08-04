@@ -9,16 +9,20 @@ import { CreateLikeDto } from './dto/create-likepost.dto';
 export class PostinfoController {
   constructor(private readonly postinfoService: PostinfoService) {}
 
+
+  //TODO: tao bài post
   @Post()
   create(@Body() createPostinfoDto: CreatePostinfoDto) {
     return this.postinfoService.create(createPostinfoDto);
   }
 
+  //TODO: Danh sach cac bai post
   @Get()
   findAll() {
     return this.postinfoService.findAll();
   }
 
+  // TODO: Tim kiem bai post theo user bat ky
   @Get("users")
   findPostByUserAny(@Body() body:{username:string})
   {
@@ -27,24 +31,26 @@ export class PostinfoController {
       // return "Tim kiem cac bai post cua user bat ky";
   }
 
+  //Trả về danh sách các comment theo id bài post
   @Get(":id/comments")
   findAllCommentsByPostId(@Param('id') id:string)
   {
     return this.postinfoService.findAllCommentsByPostId(id);
   }
 
+  //Người dùng thêm comment vào bài Post
   @Post("comments")
   commentPost(@Body() createCommentDto:CreateCommentDto)
   {
     return this.postinfoService.commentPost(createCommentDto);
   }
-
-  @Post("like/:id")
-  async likePost(@Param('id') id:string ,@Body() createLikeDTO:CreateLikeDto)
+//Người dùng like 1 bài Post
+  @Post("like/")
+  async likePost(@Body() createLikeDTO:CreateLikeDto)
   {    
-        return await this.postinfoService.UserLikePost(id,createLikeDTO);
+        return await this.postinfoService.UserLikePost(createLikeDTO);
   }
-
+//TODO: Trả về danh sách những người đã like bài post bất kỳ.
   @Get(":id/like")
   async listUserLikePost(@Param("id") id:string)
   {

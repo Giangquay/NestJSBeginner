@@ -4,6 +4,7 @@ import { UpdateUserDto } from './dto/update-user.dto';
 import { Users } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, UpdateResult } from 'typeorm';
+import { validate as isValidUUID } from 'uuid';
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
@@ -59,49 +60,58 @@ export class UsersService {
     
   }
 
-  async ChangePassword(userId: number, oldPassword: string, newPassword: string): Promise<Users> {
+  async ChangePassword(userId: string, oldPassword: string, newPassword: string): Promise<Users> {
     const user: Users = new Users();
     let dateNow = new Date();
-    const userKT = await this.userRepository.findOneBy({ id: userId });
-    if (userKT && userKT.password === oldPassword.trim()) {
-      user.id = userId;
-      user.updatedate = dateNow;
-      user.password = newPassword.trim();
-      await this.userRepository.save(user);
-      delete user.password;
-      return  user;
-    } else {
-      throw new BadRequestException('mật khẩu không khớp');
+    if(isValidUUID(userId))
+    {
+      const userKT = await this.userRepository.findOneBy({ id: userId });
+      if (userKT && userKT.password === oldPassword.trim()) {
+        user.id = userId;
+        user.updatedate = dateNow;
+        user.password = newPassword.trim();
+        await this.userRepository.save(user);
+        delete user.password;
+        return  user;
+      } else {
+        throw new BadRequestException('mật khẩu không khớp');
+      }
+    }else{
+      throw new BadRequestException('Không tìm thấy người dùng');
     }
+    
   }
 
 
   async getAllUsers():Promise<Users[]>{
-    // console.log( await this.userRepository.query("SELECT * FROM users"));
+    // const userArray = await this.userRepository.createQueryBuilder("users").select("username,email").orderBy("users.id").getMany();
+    // return  await this.userRepository.query("SELECT users.username,email FROM users");
     return await this.userRepository.createQueryBuilder("users").orderBy("users.id").getMany();
   }
 
-  async changeNameUser(userid:number,usernameNew:string):Promise<Users>{
+  async changeNameUser(userid:string,usernameNew:string):Promise<Users>{
     const user:Users = new Users();
     user.username = usernameNew.trim();
     user.id = userid;
-    const checkUpdate = await this.userRepository.createQueryBuilder().update(Users,user).set({
-      username: user.username,
-    }).where("id= :id",{id : user.id}).execute();
-    // console.log("raw ",checkUpdate.raw);
-    // console.log("affected ",checkUpdate.affected);
-    // console.log("generatedMaps ",checkUpdate.generatedMaps);
-    if(checkUpdate.affected>0)
+    if(isValidUUID(user.id))
     {
-      const getIdUser =  await this.userRepository.findOneBy({id : user.id});
-      user.id = getIdUser.id;
-      user.username = getIdUser.username;
-      user.createdate = getIdUser.createdate;
-      user.updatedate = getIdUser.updatedate;
-      delete user.password;
-      return user;
-    }else {
-        throw new HttpException("User not found",HttpStatus.BAD_REQUEST);
+      const checkUpdate = await this.userRepository.createQueryBuilder().update(Users,user).set({
+        username: user.username,
+      }).where("id= :id",{id : user.id}).execute();
+      if(checkUpdate.affected>0)
+      {
+        const getIdUser =  await this.userRepository.findOneBy({id : user.id});
+        user.id = getIdUser.id;
+        user.username = getIdUser.username;
+        user.createdate = getIdUser.createdate;
+        user.updatedate = getIdUser.updatedate;
+        delete user.password;
+        return user;
+      }else {
+          throw new HttpException("User not found",HttpStatus.BAD_REQUEST);
+      }
+    }else{
+      throw new HttpException("User not found",HttpStatus.BAD_REQUEST);
     }
   }
 }

@@ -27,7 +27,7 @@ export class UsersController {
    changePassword(@Param('id') id: string,@Body() body: { oldPassword: string; newPassword: string })
   {
     const { oldPassword, newPassword } = body;
-    return this.usersService.ChangePassword(+id,oldPassword,newPassword);
+    return this.usersService.ChangePassword(id,oldPassword,newPassword);
   }
 
   @Get('/list')
@@ -40,6 +40,6 @@ export class UsersController {
   changeName(@Param('id') id: string,@Body() body:{username: string})
   {
     const name = body.username;
-    return this.usersService.changeNameUser(+id,name);
+    return this.usersService.changeNameUser(id,name);
   } 
 }

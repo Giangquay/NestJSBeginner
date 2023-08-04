@@ -6,21 +6,13 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import {Users} from './users/entities/user.entity'
 import { UsersModule } from "./users/users.module";
 import { PostinfoModule } from './postinfo/postinfo.module';
+import { typeOrmConfigAsync } from './configs/typeorm.config';
 @Module({
   imports: [
-    TypeOrmModule.forRoot({
-        type: 'postgres',
-        host: 'localhost',
-        port: 5432,
-        password: '123456',
-        username: 'postgres',
-        entities: ['dist/**/*.entity.js'],
-        database: 'TableTest',
-        synchronize: true,
-        logging: true,
-    }),
+    TypeOrmModule.forRootAsync(typeOrmConfigAsync),
     UsersModule,
     PostinfoModule,
+    ConfigModule.forRoot()//Khoi dong @nestjs/config
   ],
   controllers: [AppController],//Noi import module
   providers: [AppService],//Noi import service

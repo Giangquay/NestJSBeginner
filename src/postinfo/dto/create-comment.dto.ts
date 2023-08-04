@@ -11,5 +11,5 @@ export class CreateCommentDto {
 
     post:string;
     
-    user:number
+    user:string;
 }
