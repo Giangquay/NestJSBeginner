@@ -1,6 +1,6 @@
-import { Column, Entity, ManyToMany, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToMany, ManyToOne, OneToOne, PrimaryGeneratedColumn } from "typeorm";
 import { Postinfo } from "./postinfo.entity";
-import { Users } from "src/users/entities/user.entity";
+import { UserEntity } from "src/users/entities/user.entity";
 
 
 @Entity('comments')
@@ -13,8 +13,13 @@ export class Comments{
     content: string;
 
     @ManyToOne(()=>Postinfo,(post)=>post.id)
-    post:Postinfo
-
-    @ManyToOne(()=>Users,(users)=>users.id)
-    user:Users
+    post:Postinfo;
+    // @ManyToOne(()=>Postinfo,(post)=>post.comment,{
+    //     eager: true,
+    //     onDelete: 'CASCADE'
+    // })
+    // post:Postinfo[];
+    @ManyToOne(()=>UserEntity,(users)=>users.id)
+    
+    user:UserEntity
 }

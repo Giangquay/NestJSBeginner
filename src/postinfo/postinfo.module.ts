@@ -4,12 +4,12 @@ import { PostinfoController } from './postinfo.controller';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Postinfo } from './entities/postinfo.entity';
 import { UsersModule } from 'src/users/users.module';
-import { Users } from 'src/users/entities/user.entity';
+import { UserEntity } from 'src/users/entities/user.entity';
 import { Comments } from './entities/comment.entity';
-import { Like } from './entities/likepost.entity';
+import { LikeEntity } from './entities/likepost.entity';
 
 @Module({
-  imports:[TypeOrmModule.forFeature([Postinfo,Comments,Users,Like])],
+  imports:[TypeOrmModule.forFeature([Postinfo,Comments,UserEntity,LikeEntity])],
   controllers: [PostinfoController],
   providers: [PostinfoService]
 })

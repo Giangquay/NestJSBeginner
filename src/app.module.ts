@@ -3,7 +3,6 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import {ConfigModule, ConfigService} from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import {Users} from './users/entities/user.entity'
 import { UsersModule } from "./users/users.module";
 import { PostinfoModule } from './postinfo/postinfo.module';
 import { typeOrmConfigAsync } from './configs/typeorm.config';

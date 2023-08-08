@@ -1,23 +1,27 @@
 import { Injectable, BadRequestException, HttpException, Logger, HttpStatus } from '@nestjs/common';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
-import { Users } from './entities/user.entity';
+import { UserEntity } from './entities/user.entity';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, UpdateResult } from 'typeorm';
 import { validate as isValidUUID } from 'uuid';
+import * as bcrypt from 'bcrypt';
+
 @Injectable()
 export class UsersService {
   private readonly logger = new Logger(UsersService.name);
 
   constructor(
-    @InjectRepository(Users) private readonly userRepository: Repository<Users>,
+    @InjectRepository(UserEntity) private readonly userRepository: Repository<UserEntity>,
   ) { }
 
-  async create(createUserDto: CreateUserDto): Promise<Users> {
-    const user: Users = new Users();
+  async create(createUserDto: CreateUserDto): Promise<UserEntity> {
+    const user: UserEntity = new UserEntity();
     let dateNow = new Date();
     user.email = createUserDto.email.trim();
-    user.password = createUserDto.password.trim();
+    //hash
+    user.salt = await bcrypt.genSalt();
+    user.password =  await bcrypt.hash(createUserDto.password,user.salt);
     user.createdate = dateNow;
     const foundUser = await this.userRepository.findOneBy({ email: user.email })
     console.log(foundUser);
@@ -39,39 +43,44 @@ export class UsersService {
     return false;
   }
 
-  async loginUser(createUserDto: CreateUserDto): Promise<Users>{
-    const user: Users = new Users();
-    user.email = createUserDto.email.trim();
-    user.password = createUserDto.password.trim();
-    const foundEmailUser = await this.validateEmailUser(user.email);
-    if(foundEmailUser==true)
+  async loginUser(createUserDto: CreateUserDto): Promise<UserEntity>{
+    const {email,password}= createUserDto;
+    const user = await this.userRepository.findOneBy({ email: email});
+    if(user)
     {
-      const foundUser = await this.userRepository.findOneBy({ email: user.email, password: user.password });
-      if (foundUser == null) {
-        throw new HttpException("Email hoặc Mật khẩu của bạn không đúng, vui lòng thử lại", HttpStatus.BAD_REQUEST);
-      } else {
-        delete foundUser.password;
-        delete foundUser.updatedate;
-        return foundUser;
+      if(await user.validatePassword(password))
+      {
+        delete user.password;delete user.salt;delete user.updatedate;
+        return user;
+      }else{
+        throw new HttpException("Mật khẩu không đúng",HttpStatus.BAD_REQUEST);
       }
+      
     }else{
       throw new HttpException("Email không có trong hệ thống",HttpStatus.BAD_REQUEST);
     }
     
   }
 
-  async ChangePassword(userId: string, oldPassword: string, newPassword: string): Promise<Users> {
-    const user: Users = new Users();
+  comparePassword(rawPassword:string, hash:string)
+  {
+    return  bcrypt.compare(rawPassword, hash);
+  }
+
+  async ChangePassword(userId: string, oldPassword: string, newPassword: string): Promise<UserEntity> {
+    const user: UserEntity = new UserEntity();
     let dateNow = new Date();
     if(isValidUUID(userId))
     {
       const userKT = await this.userRepository.findOneBy({ id: userId });
-      if (userKT && userKT.password === oldPassword.trim()) {
+      if (userKT&& await userKT.validatePassword(oldPassword)) {
         user.id = userId;
         user.updatedate = dateNow;
-        user.password = newPassword.trim();
+        user.salt = await bcrypt.genSalt();
+        user.password = await bcrypt.hash(newPassword,user.salt);
         await this.userRepository.save(user);
         delete user.password;
+        delete user.salt;
         return  user;
       } else {
         throw new BadRequestException('mật khẩu không khớp');
@@ -82,20 +91,19 @@ export class UsersService {
     
   }
 
-
-  async getAllUsers():Promise<Users[]>{
+  async getAllUsers():Promise<UserEntity[]>{
     // const userArray = await this.userRepository.createQueryBuilder("users").select("username,email").orderBy("users.id").getMany();
     // return  await this.userRepository.query("SELECT users.username,email FROM users");
     return await this.userRepository.createQueryBuilder("users").orderBy("users.id").getMany();
   }
 
-  async changeNameUser(userid:string,usernameNew:string):Promise<Users>{
-    const user:Users = new Users();
+  async changeNameUser(userid:string,usernameNew:string):Promise<UserEntity>{
+    const user:UserEntity = new UserEntity();
     user.username = usernameNew.trim();
     user.id = userid;
     if(isValidUUID(user.id))
     {
-      const checkUpdate = await this.userRepository.createQueryBuilder().update(Users,user).set({
+      const checkUpdate = await this.userRepository.createQueryBuilder().update(UserEntity,user).set({
         username: user.username,
       }).where("id= :id",{id : user.id}).execute();
       if(checkUpdate.affected>0)

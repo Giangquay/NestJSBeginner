@@ -1,8 +1,8 @@
-import { Users } from "src/users/entities/user.entity";
-import { BeforeInsert, Column, Entity, JoinColumn, ManyToOne, PrimaryGeneratedColumn} from "typeorm";
+import { UserEntity } from "src/users/entities/user.entity";
+import { BeforeInsert, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn} from "typeorm";
+import { Comments } from "./comment.entity";
 @Entity('post')
 export class Postinfo {
-
     @PrimaryGeneratedColumn('uuid')
     id : string;
 
@@ -21,8 +21,11 @@ export class Postinfo {
     @Column({name: 'updateat',type :'date',default :new Date()})
     updateat:Date;
 
-    @ManyToOne(()=>Users,(user)=>user.post)
+    @ManyToOne(()=>UserEntity,(user)=>user.post)
     @JoinColumn({name: 'uid'})
-    user:Users;
+    user:UserEntity;
 
+    @OneToMany(()=>Comments,(comment:Comments)=>comment.post)
+    comments:Comments[];
+    
 }

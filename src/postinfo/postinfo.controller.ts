@@ -1,10 +1,9 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Res, Req } from '@nestjs/common';
 import { PostinfoService } from './postinfo.service';
 import { CreatePostinfoDto } from './dto/create-postinfo.dto';
 import { UpdatePostinfoDto } from './dto/update-postinfo.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreateLikeDto } from './dto/create-likepost.dto';
-
 @Controller('post')
 export class PostinfoController {
   constructor(private readonly postinfoService: PostinfoService) {}
@@ -16,18 +15,19 @@ export class PostinfoController {
     return this.postinfoService.create(createPostinfoDto);
   }
 
-  //TODO: Danh sach cac bai post
+  // TODO: Danh sach cac bai post
   @Get()
-  findAll() {
-    return this.postinfoService.findAll();
+  findAll(@Query("page") page:number){
+    const listPost = this.postinfoService.findAll(page);
+    return listPost;
   }
 
   // TODO: Tim kiem bai post theo user bat ky
   @Get("users")
-  findPostByUserAny(@Body() body:{username:string})
+  findPostByUserAny(@Body() body:{username:string},@Query("page") page:number)
   {
     const name = body.username;
-      return this.postinfoService.findAnyUserPost(name);
+      return this.postinfoService.findAnyUserPost(name,page);
       // return "Tim kiem cac bai post cua user bat ky";
   }
 
@@ -52,8 +52,10 @@ export class PostinfoController {
   }
 //TODO: Trả về danh sách những người đã like bài post bất kỳ.
   @Get(":id/like")
-  async listUserLikePost(@Param("id") id:string)
+  async listUserLikePost(@Param("id") id:string,@Query("page") page:number)
   {
-    return this.postinfoService.listPostUserLike(id);
+    return this.postinfoService.listPostUserLike(id,page);
   }
+
+
 }
