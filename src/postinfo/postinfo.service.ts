@@ -37,7 +37,7 @@ export class PostinfoService {
           userid.id = createPostinfoDto.uid;
           postinfo.user=userid;
           await this.postRepository.manager.save(postinfo);
-          delete postinfo.updateat;
+          delete postinfo.updated;
           delete postinfo.id;
           delete postinfo.user;
           return postinfo;
@@ -110,8 +110,8 @@ export class PostinfoService {
       }else{
           throw  new HttpException("Không tìm thấy bài post",HttpStatus.BAD_REQUEST);
       }
-     
     ;
+  
   }
   //Nguoi dung comment bai post 
   async commentPost(createcommentdto:CreateCommentDto):Promise<Comments>
