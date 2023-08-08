@@ -1,4 +1,4 @@
-import { Column, PrimaryGeneratedColumn } from "typeorm";
+import { Column, CreateDateColumn, PrimaryGeneratedColumn, Timestamp } from "typeorm";
 
 
 export abstract class BaseEntity {
@@ -6,10 +6,10 @@ export abstract class BaseEntity {
     @PrimaryGeneratedColumn('uuid')
     id:string;
 
-    @Column({name: 'created', type: 'date',default :new Date()})
+    @Column({ type: 'timestamp with time zone', nullable: true ,default:new Date()})
     createdAt:Date;
 
-    @Column({name: 'updated',type :'date',default :new Date()})
+    @Column({ type: 'timestamp with time zone', nullable: true ,default:new Date()})
     updated:Date;
 
 

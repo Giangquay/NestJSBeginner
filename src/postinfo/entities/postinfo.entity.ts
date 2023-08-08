@@ -1,9 +1,10 @@
 import { UserEntity } from "src/users/entities/user.entity";
 import { BeforeInsert, Column, Entity, JoinColumn, ManyToOne, OneToMany, PrimaryGeneratedColumn} from "typeorm";
-import { Comments } from "./comment.entity";
+import { CommentsEntity } from "./comment.entity";
 import { BaseEntity } from "src/entity/baseEntity.entity";
+import { LikeEntity } from "./likepost.entity";
 @Entity('post')
-export class Postinfo extends BaseEntity {
+export class PostEnity extends BaseEntity {
     @Column({name :'title',type:'text'})
     title: string;
 
@@ -17,7 +18,9 @@ export class Postinfo extends BaseEntity {
     @JoinColumn({name: 'uid'})
     user:UserEntity;
 
-    @OneToMany(()=>Comments,(comment:Comments)=>comment.post)
-    comments:Comments[];
+    @OneToMany(()=>CommentsEntity,(comment:CommentsEntity)=>comment.post)
+    comments:CommentsEntity[];
     
+    @OneToMany(()=>LikeEntity,(like:LikeEntity)=>like.post)
+    like:LikeEntity[];
 }

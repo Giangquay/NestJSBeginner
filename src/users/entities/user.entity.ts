@@ -1,7 +1,7 @@
-import { Postinfo } from "src/postinfo/entities/postinfo.entity";
+import { PostEnity } from "src/postinfo/entities/postinfo.entity";
 import { Entity,Column,PrimaryGeneratedColumn ,PrimaryColumn, ManyToOne, OneToMany, CreateDateColumn, JoinColumn} from "typeorm";
 import * as bcrypt from 'bcrypt';
-import { Comments } from "src/postinfo/entities/comment.entity";
+import { CommentsEntity } from "src/postinfo/entities/comment.entity";
 import { LikeEntity } from "src/postinfo/entities/likepost.entity";
 @Entity('users')
 export class UserEntity {
@@ -21,21 +21,21 @@ export class UserEntity {
     @Column({name: 'created',type :'date',default :new Date()})
     createdate:Date;
 
-
     @Column({name: 'updateat',type :'date',default :new Date()})
     updatedate:Date;
 
-    @OneToMany(()=>Postinfo,(post)=>post.user,{eager:true})
-    post:Postinfo[]
+    @OneToMany(()=>PostEnity,(post)=>post.user,{eager:true})
+    post:PostEnity[]
 
     @Column({type:'varchar',nullable:true})
     salt:string;
 
-    @OneToMany(()=>Comments,(comment)=>comment.user,{eager:true})
-    comments:Comments[]
+    @OneToMany(()=>CommentsEntity,(comment)=>comment.user,{eager:true})
+    comments:CommentsEntity[]
 
-    @OneToMany(()=>LikeEntity,(like)=>like.user)
-    like:LikeEntity[]
+    @OneToMany(()=>LikeEntity,(like:LikeEntity)=>like.user)
+    like:LikeEntity[];
+    
     async validatePassword(password:string): Promise<boolean>{
         const hash = await bcrypt.hash(password,this.salt);
         return hash==this.password;

@@ -1,6 +1,6 @@
 
 import {IsArray, IsNotEmpty, IsOptional, IsUUID} from 'class-validator'
-import { Postinfo } from "../entities/postinfo.entity";
+import { PostEnity } from "../entities/postinfo.entity";
 
 
 export class CreateCommentDto {

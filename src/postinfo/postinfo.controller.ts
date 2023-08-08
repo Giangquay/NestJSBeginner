@@ -52,9 +52,9 @@ export class PostinfoController {
   }
 //TODO: Trả về danh sách những người đã like bài post bất kỳ.
   @Get(":id/like")
-  async listUserLikePost(@Param("id") id:string,@Query("page") page:number)
+  async listUserLikePost(@Param("id") id:string)
   {
-    return this.postinfoService.listPostUserLike(id,page);
+    return this.postinfoService.listPostUserLike(id);
   }
 
 
