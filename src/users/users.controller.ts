@@ -1,4 +1,4 @@
-import { Controller,Put, Get, Post, Body, Patch, Param, Delete, UsePipes, ValidationPipe, UnauthorizedException, UseGuards } from '@nestjs/common';
+import { Controller,Put, Get, Post, Body, Patch, Param, Delete, UsePipes, ValidationPipe, UnauthorizedException, UseGuards, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -34,9 +34,9 @@ export class UsersController {
 
   @UseGuards(AuthGuard('jwt'))
   @Get('/list')
-  getAll()
+  getAll(@Query("page") page:number)
   {
-    return this.usersService.getAllUsers();
+    return this.usersService.getAllUsers(page);
   }
 
   @UseGuards(AuthGuard('jwt'))

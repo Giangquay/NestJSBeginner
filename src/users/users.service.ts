@@ -84,8 +84,27 @@ export class UsersService {
     
   }
 
-  async getAllUsers():Promise<UserEntity[]>{
-    return await this.userRepository.createQueryBuilder("users").orderBy("users.id").select(["users.username","users.email","users.id"]).getRawMany();
+  async getAllUsers(page:number):Promise<UserEntity[]>{
+
+    const item:number=5;
+    const lengUser = await this.userRepository.createQueryBuilder().getCount();
+    let totalPager:number;
+    if(lengUser%item==0)
+    {
+      totalPager = (lengUser/item);
+        
+    }else {
+      totalPager = Math.ceil(lengUser/item);
+    }
+    if(page>totalPager)
+    {
+      throw new HttpException("Not found",HttpStatus.NOT_FOUND);
+    }else{
+      return await this.userRepository.createQueryBuilder("users").orderBy("users.id").select(["users.username","users.email","users.id"])
+      .skip(item*(page-1)).take(item)
+      .getMany();
+    }
+   
   }
 
   async changeNameUser(userid:string,usernameNew:string):Promise<UserEntity>{
