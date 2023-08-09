@@ -1,7 +1,8 @@
-import { Controller,Put, Get, Post, Body, Patch, Param, Delete, UsePipes, ValidationPipe, UnauthorizedException } from '@nestjs/common';
+import { Controller,Put, Get, Post, Body, Patch, Param, Delete, UsePipes, ValidationPipe, UnauthorizedException, UseGuards } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { AuthGuard } from '@nestjs/passport';
 
 @Controller('users')
 export class UsersController {
@@ -30,12 +31,15 @@ export class UsersController {
     return this.usersService.ChangePassword(id,oldPassword,newPassword);
   }
 
+
+  @UseGuards(AuthGuard('jwt'))
   @Get('/list')
   getAll()
   {
     return this.usersService.getAllUsers();
   }
 
+  @UseGuards(AuthGuard('jwt'))
   @Put('/info/:id')
   changeName(@Param('id') id: string,@Body() body:{username: string})
   {

@@ -17,12 +17,10 @@ export class UsersService {
 
   async create(createUserDto: CreateUserDto): Promise<UserEntity> {
     const user: UserEntity = new UserEntity();
-    let dateNow = new Date();
     user.email = createUserDto.email.trim();
     //hash
     user.salt = await bcrypt.genSalt();
     user.password =  await bcrypt.hash(createUserDto.password,user.salt);
-    user.createdAt = dateNow;
     const foundUser = await this.userRepository.findOneBy({ email: user.email })
     console.log(foundUser);
     if (foundUser==null) {
@@ -87,7 +85,7 @@ export class UsersService {
   }
 
   async getAllUsers():Promise<UserEntity[]>{
-    return await this.userRepository.createQueryBuilder("users").orderBy("users.id").select(["users.username","users.email","users.id"]).getMany();
+    return await this.userRepository.createQueryBuilder("users").orderBy("users.id").select(["users.username","users.email","users.id"]).getRawMany();
   }
 
   async changeNameUser(userid:string,usernameNew:string):Promise<UserEntity>{

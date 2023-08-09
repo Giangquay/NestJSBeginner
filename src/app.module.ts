@@ -6,12 +6,14 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { UsersModule } from "./users/users.module";
 import { PostinfoModule } from './postinfo/postinfo.module';
 import { typeOrmConfigAsync } from './configs/typeorm.config';
+import { AuthModule } from './auth/auth.module';
 @Module({
   imports: [
     TypeOrmModule.forRootAsync(typeOrmConfigAsync),
     UsersModule,
     PostinfoModule,
-    ConfigModule.forRoot()//Khoi dong @nestjs/config
+    ConfigModule.forRoot(),
+    AuthModule//Khoi dong @nestjs/config
   ],
   controllers: [AppController],//Noi import module
   providers: [AppService],//Noi import service
