@@ -17,6 +17,8 @@ export default class TypeOrmConfig{
             database: configService.get('DB_NAME'),
             synchronize: true,
             logging: true,
+            useUTC:true,
+            
             }
     }
 }

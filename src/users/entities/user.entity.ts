@@ -3,8 +3,9 @@ import { Entity,Column,PrimaryGeneratedColumn ,PrimaryColumn, ManyToOne, OneToMa
 import * as bcrypt from 'bcrypt';
 import { CommentsEntity } from "src/postinfo/entities/comment.entity";
 import { LikeEntity } from "src/postinfo/entities/likepost.entity";
+import { BaseEntity } from "src/entity/baseEntity.entity";
 @Entity('users')
-export class UserEntity {
+export class UserEntity  extends BaseEntity{
 
     @PrimaryGeneratedColumn('uuid')
     id:string;
@@ -17,12 +18,6 @@ export class UserEntity {
 
     @Column({type : 'varchar', length:255 ,nullable:false})
     password:string;
-
-    @Column({name: 'created',type :'date',default :new Date()})
-    createdate:Date;
-
-    @Column({name: 'updateat',type :'date',default :new Date()})
-    updatedate:Date;
 
     @OneToMany(()=>PostEnity,(post)=>post.user,{eager:true})
     post:PostEnity[]

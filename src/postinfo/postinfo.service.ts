@@ -49,37 +49,45 @@ export class PostinfoService {
         postinfo.user = userid;
         await this.postRepository.manager.save(postinfo);
         delete postinfo.updated;
-        delete postinfo.id;
-        delete postinfo.user;
         return postinfo;
       } else {
-        this.thowUser('Vui lòng đăng nhập để viết post');
+        this.thowExceoption('Vui lòng đăng nhập để viết post');
       }
     } else {
-      this.thowUser('Vui lòng đăng nhập để viết post');
+      this.thowExceoption('Vui lòng đăng nhập để viết post');
     }
   }
-  thowUser(message: string) {
+  thowExceoption(message: string) {
     throw new HttpException(message, HttpStatus.BAD_REQUEST);
   }
 
   async findAll(page: number): Promise<PostEnity[]> {
     const itemPage = 4;
-    const count = await this.postRepository.createQueryBuilder().getCount();
-    let totalpage: number =
-      count % itemPage != 0 ? (count % itemPage) + 1 : count / itemPage;
+    const numberPager = await this.postRepository.createQueryBuilder().getCount();
+    let totalpage;
+    if(numberPager%itemPage==0)
+    {
+      totalpage = (numberPager/itemPage)
+    }else{
+      totalpage = Math.ceil((numberPager/itemPage));
+    }
     if (page > totalpage) {
       throw new HttpException('Not Found', HttpStatus.NOT_FOUND);
+    }else {
+      const postinfo = await this.postRepository.createQueryBuilder("post")
+      .leftJoinAndSelect("post.user","user").select(["post.id"
+      ,"post.contentpost",
+      "post.title",
+      "post.updated"
+      ,"user.id","user.username"]).take(4).skip(4*(page-1))
+      .getMany();
+      return postinfo;
     }
-    const postinfo = await this.postRepository.find({
-      take: itemPage,
-      skip: itemPage * (page - 1),
-    });
-    return postinfo;
+   
   }
   //API trả về các bài post của user bất kỳ.
   async findAnyUserPost(username: string, page: number): Promise<PostEnity[]> {
-    const item_page = 5;
+    const itemPage = 4;
     const checkUsername = await this.userRepository
       .createQueryBuilder()
       .select('users')
@@ -87,12 +95,12 @@ export class PostinfoService {
       .where('users.username LIKE :name', { name: `${username}%` })
       .getMany();
     if (checkUsername.length != 0) {
-      return await this.postRepository
+       const postUser= await this.postRepository
         .createQueryBuilder('post')
         .leftJoinAndSelect('post.user', 'user')
-        .skip(item_page * (page - 1))
-        .take(item_page)
-        .where('user.username LIKE :name', { name: 'Tran %' })
+        .skip(itemPage * (page - 1))
+        .take(itemPage)
+        .where('user.username LIKE :name', { name: `${username}%` })
         .select([
           'post.id',
           'post.title',
@@ -101,8 +109,16 @@ export class PostinfoService {
           'user.id',
         ])
         .getMany();
+        const count = postUser.length;
+        let totalpage: number =
+          count % itemPage != 0 ? (count % itemPage) + 1 : count / itemPage;
+        if (page > totalpage) {
+        throw new HttpException('Not Found', HttpStatus.NOT_FOUND);
+        }
+
+        return postUser;
     } else {
-      this.thowUser('Không tìm thấy user nào');
+      this.thowExceoption('Không tìm thấy user nào');
     }
   }
   //API trả về danh sách các comment của 1 bài post bất kỳ.
@@ -160,6 +176,7 @@ export class PostinfoService {
         comemnt.post = post;
         await this.commentsRepository.save(comemnt);
         delete comemnt.id;
+        delete comemnt.updated;
         return comemnt;
       } else {
         throw new HttpException('Bạn chưa đang nhập', HttpStatus.BAD_REQUEST);
@@ -201,7 +218,7 @@ export class PostinfoService {
         like.user = user;
         like.post = post;
         await this.likesRepository.save(like);
-        // delete like.id;
+        delete like.id;
         // delete like.post;
         return like;
       }
@@ -232,5 +249,50 @@ export class PostinfoService {
     } else {
       throw new HttpException('Bài post không tồn tại', HttpStatus.BAD_REQUEST);
     }
+  }
+
+  //API xóa post
+  async deletePost(postid:string):Promise<any>
+  {
+    if(isValidUUID(postid))
+    {
+      const postExists = await this.postRepository.findOneBy({ id: postid});
+       if(postExists)
+       {
+        return this.commentsRepository
+        .createQueryBuilder()
+        .delete()
+        .from('comments')
+        .where('id = :id', {id:postid })
+        .execute();;
+       }else{
+          throw new HttpException("Không tìm thấy bài Post",HttpStatus.BAD_REQUEST);
+       }
+    }else{
+      throw new HttpException("Không tìm thấy bài Post",HttpStatus.BAD_REQUEST);
+    }
+      
+     
+  }
+
+  //API xóa comment 
+  async deleteComment(comment_ID:string):Promise<any>
+  {
+    if(isValidUUID(comment_ID))
+    {
+      const commentExists = await this.commentsRepository.findOneBy({ id: comment_ID });
+
+    if(commentExists)
+    {
+      return this.commentsRepository
+      .createQueryBuilder()
+      .delete()
+      .from('comments')
+      .where('id = :id', {id:comment_ID })
+      .execute();;
+    }else{
+       throw new HttpException("Không tìm thấy comment",HttpStatus.BAD_REQUEST);
+    }
+  }
   }
 }

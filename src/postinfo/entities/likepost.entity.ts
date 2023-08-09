@@ -13,7 +13,4 @@ export class LikeEntity {
 
     @ManyToOne(()=>UserEntity,(users)=>users.like)
     user:UserEntity
-
-    @Column({ type: 'timestamp with time zone', nullable: true ,default:new Date()})
-    createdAt:Date;
 }

@@ -52,10 +52,20 @@ export class PostinfoController {
   }
 //TODO: Trả về danh sách những người đã like bài post bất kỳ.
   @Get(":id/like")
-  async listUserLikePost(@Param("id") id:string)
+   listUserLikePost(@Param("id") id:string)
   {
     return this.postinfoService.listPostUserLike(id);
   }
 
 
+  @Delete(":id")
+  deletePostbyId(@Param("id") id:string)
+  {
+    return this.postinfoService.deletePost(id);
+  }
+
+  @Delete("comments/:id")
+  delteCommentbyId(@Param("id") id:string){
+    return this.postinfoService.deleteComment(id);
+  }
 }

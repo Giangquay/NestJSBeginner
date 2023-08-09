@@ -22,7 +22,7 @@ export class UsersService {
     //hash
     user.salt = await bcrypt.genSalt();
     user.password =  await bcrypt.hash(createUserDto.password,user.salt);
-    user.createdate = dateNow;
+    user.createdAt = dateNow;
     const foundUser = await this.userRepository.findOneBy({ email: user.email })
     console.log(foundUser);
     if (foundUser==null) {
@@ -50,7 +50,7 @@ export class UsersService {
     {
       if(await user.validatePassword(password))
       {
-        delete user.password;delete user.salt;delete user.updatedate;
+        delete user.password;delete user.salt;delete user.updated;
         return user;
       }else{
         throw new HttpException("Mật khẩu không đúng",HttpStatus.BAD_REQUEST);
@@ -62,11 +62,6 @@ export class UsersService {
     
   }
 
-  comparePassword(rawPassword:string, hash:string)
-  {
-    return  bcrypt.compare(rawPassword, hash);
-  }
-
   async ChangePassword(userId: string, oldPassword: string, newPassword: string): Promise<UserEntity> {
     const user: UserEntity = new UserEntity();
     let dateNow = new Date();
@@ -75,7 +70,7 @@ export class UsersService {
       const userKT = await this.userRepository.findOneBy({ id: userId });
       if (userKT&& await userKT.validatePassword(oldPassword)) {
         user.id = userId;
-        user.updatedate = dateNow;
+        user.updated = dateNow;
         user.salt = await bcrypt.genSalt();
         user.password = await bcrypt.hash(newPassword,user.salt);
         await this.userRepository.save(user);
@@ -92,9 +87,7 @@ export class UsersService {
   }
 
   async getAllUsers():Promise<UserEntity[]>{
-    // const userArray = await this.userRepository.createQueryBuilder("users").select("username,email").orderBy("users.id").getMany();
-    // return  await this.userRepository.query("SELECT users.username,email FROM users");
-    return await this.userRepository.createQueryBuilder("users").orderBy("users.id").getMany();
+    return await this.userRepository.createQueryBuilder("users").orderBy("users.id").select(["users.username","users.email","users.id"]).getMany();
   }
 
   async changeNameUser(userid:string,usernameNew:string):Promise<UserEntity>{
@@ -111,8 +104,8 @@ export class UsersService {
         const getIdUser =  await this.userRepository.findOneBy({id : user.id});
         user.id = getIdUser.id;
         user.username = getIdUser.username;
-        user.createdate = getIdUser.createdate;
-        user.updatedate = getIdUser.updatedate;
+        user.createdAt = getIdUser.createdAt;
+        user.updated = getIdUser.updated;
         delete user.password;
         return user;
       }else {
