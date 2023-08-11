@@ -19,6 +19,9 @@ export class UserEntity  extends BaseEntity{
     @Column({type : 'varchar', length:255 ,nullable:false})
     password:string;
 
+    @Column({name:'image',type : 'varchar', length:255,nullable:true})
+    image:string;
+
     @OneToMany(()=>PostEnity,(post)=>post.user,{eager:true})
     post:PostEnity[]
 

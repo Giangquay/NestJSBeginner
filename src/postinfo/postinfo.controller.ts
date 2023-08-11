@@ -1,9 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Res, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Res, Req, UsePipes, ValidationPipe } from '@nestjs/common';
 import { PostinfoService } from './postinfo.service';
 import { CreatePostinfoDto } from './dto/create-postinfo.dto';
 import { UpdatePostinfoDto } from './dto/update-postinfo.dto';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreateLikeDto } from './dto/create-likepost.dto';
+import { PageOptionsDto  } from './dto/page.dto';
+import { pick } from 'src/handler/handler';
+@UsePipes(new ValidationPipe({ transform: true}))
 @Controller('post')
 export class PostinfoController {
   constructor(private readonly postinfoService: PostinfoService) {}
@@ -17,8 +20,10 @@ export class PostinfoController {
 
   // TODO: Danh sach cac bai post
   @Get()
-  findAll(@Query("page") page:number){
-    const listPost = this.postinfoService.findAll(page);
+  @UsePipes(ValidationPipe)
+  findAll(@Query() pagedto:PageOptionsDto ){
+    const options = pick(pagedto,['page','limit','sort','order']);
+    const listPost = this.postinfoService.findAllPostOfUser(options);
     return listPost;
   }
 

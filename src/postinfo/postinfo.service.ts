@@ -15,8 +15,7 @@ import { CommentsEntity } from './entities/comment.entity';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { LikeEntity } from './entities/likepost.entity';
 import { CreateLikeDto } from './dto/create-likepost.dto';
-import { map } from 'rxjs';
-
+import { PageOptionsDto } from './dto/page.dto';
 @Injectable()
 export class PostinfoService {
   constructor(
@@ -47,8 +46,9 @@ export class PostinfoService {
         postinfo.image = createPostinfoDto.image;
         userid.id = createPostinfoDto.uid;
         postinfo.user = userid;
+        postinfo.user.username=kiemtraND.username;
+        postinfo.user.email=kiemtraND.email;
         await this.postRepository.manager.save(postinfo);
-        delete postinfo.updated;
         return postinfo;
       } else {
         this.thowExceoption('Vui lòng đăng nhập để viết post');
@@ -61,30 +61,26 @@ export class PostinfoService {
     throw new HttpException(message, HttpStatus.BAD_REQUEST);
   }
 
-  async findAll(page: number): Promise<PostEnity[]> {
-    const itemPage = 4;
-    const numberPager = await this.postRepository.createQueryBuilder().getCount();
-    let totalpage;
-    if(numberPager%itemPage==0)
-    {
-      totalpage = (numberPager/itemPage)
-    }else{
-      totalpage = Math.ceil((numberPager/itemPage));
-    }
-    if (page > totalpage) {
-      throw new HttpException('Not Found', HttpStatus.NOT_FOUND);
-    }else {
-      const postinfo = await this.postRepository.createQueryBuilder("post")
-      .leftJoinAndSelect("post.user","user").select(["post.id"
-      ,"post.contentpost",
-      "post.title",
-      "post.updated"
-      ,"user.id","user.username"]).take(4).skip(4*(page-1))
+  async findAllPostOfUser(pagedto:PageOptionsDto ): Promise<any> {
+    try{
+       const skip = (pagedto.page-1)*pagedto.limit;
+        const data=await this.postRepository.createQueryBuilder('post')
+      .leftJoin('post.user','users').select(['post.id','post.title','post.contentpost','post.createdAt','users.id',
+      'users.username','users.image'])
+      .orderBy(`post.${pagedto.sort}`,pagedto.order)
+      .take(pagedto.limit).skip(skip)
       .getMany();
-      return postinfo;
+      return {
+        data:data,
+        page: pagedto.page,
+        limt: pagedto.limit,
+      };
+    }catch(e)
+    {
+
     }
-   
   }
+
   //API trả về các bài post của user bất kỳ.
   async findAnyUserPost(username: string, page: number): Promise<PostEnity[]> {
     const itemPage = 4;

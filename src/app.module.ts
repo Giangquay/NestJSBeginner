@@ -13,7 +13,8 @@ import { AuthModule } from './auth/auth.module';
     UsersModule,
     PostinfoModule,
     ConfigModule.forRoot(),
-    AuthModule//Khoi dong @nestjs/config
+    AuthModule//Khoi dong @nestjs/config,
+   
   ],
   controllers: [AppController],//Noi import module
   providers: [AppService],//Noi import service
