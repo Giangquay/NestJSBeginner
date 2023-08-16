@@ -66,7 +66,7 @@ export class PostinfoService {
        const skip = (pagedto.page-1)*pagedto.limit;
         const data=await this.postRepository.createQueryBuilder('post')
       .leftJoin('post.user','users').select(['post.id','post.title','post.contentpost','post.createdAt','users.id',
-      'users.username','users.image'])
+      'users.username','users.avatar'])
       .orderBy(`post.${pagedto.sort}`,pagedto.order)
       .take(pagedto.limit).skip(skip)
       .getMany();
@@ -77,45 +77,31 @@ export class PostinfoService {
       };
     }catch(e)
     {
-
+        throw new HttpException(e.message,HttpStatus.BAD_REQUEST);
     }
   }
 
   //API trả về các bài post của user bất kỳ.
-  async findAnyUserPost(username: string, page: number): Promise<PostEnity[]> {
-    const itemPage = 4;
-    const checkUsername = await this.userRepository
-      .createQueryBuilder()
-      .select('users')
-      .from(UserEntity, 'users')
-      .where('users.username LIKE :name', { name: `${username}%` })
-      .getMany();
-    if (checkUsername.length != 0) {
-       const postUser= await this.postRepository
-        .createQueryBuilder('post')
-        .leftJoinAndSelect('post.user', 'user')
-        .skip(itemPage * (page - 1))
-        .take(itemPage)
-        .where('user.username LIKE :name', { name: `${username}%` })
-        .select([
-          'post.id',
-          'post.title',
-          'post.contentpost',
-          'user.username',
-          'user.id',
-        ])
+  async findAnyUserPost(username: string,pagedto:PageOptionsDto): Promise<any> {
+    const skip = (pagedto.page-1)*pagedto.limit;
+       const postUser= await this.postRepository.createQueryBuilder('post')
+        .leftJoinAndSelect('post.user', 'user').skip(skip).take(pagedto.limit)
+        .where('user.username LIKE :name', { name: `${username}%` }).select(['post.id','post.title','post.contentpost','post.createdAt','user.username','user.id',])
         .getMany();
-        const count = postUser.length;
-        let totalpage: number =
-          count % itemPage != 0 ? (count % itemPage) + 1 : count / itemPage;
-        if (page > totalpage) {
-        throw new HttpException('Not Found', HttpStatus.NOT_FOUND);
-        }
-
-        return postUser;
-    } else {
-      this.thowExceoption('Không tìm thấy user nào');
-    }
+      if(postUser)
+      {
+        return {
+          user:{
+            postUser
+          }
+        };
+      }else
+      {
+         throw new HttpException("User not found",HttpStatus.BAD_REQUEST);
+      }
+      
+        
+    
   }
   //API trả về danh sách các comment của 1 bài post bất kỳ.
   async findAllCommentsByPostId(postid: string): Promise<any> {
@@ -138,7 +124,7 @@ export class PostinfoService {
           'post.contentpost',
           'comment.content',
           'comment.createdAt',
-        ])
+        ]).orderBy('comment.createdAt','DESC')
         .getMany();
       return array;
     } else {
@@ -151,72 +137,83 @@ export class PostinfoService {
   //Nguoi dung comment bai post
   async commentPost(
     createcommentdto: CreateCommentDto,
-  ): Promise<CommentsEntity> {
-    const user: UserEntity = new UserEntity();
-    const post: PostEnity = new PostEnity();
-    const comemnt: CommentsEntity = new CommentsEntity();
-    //Lay id cua User va Post
+  ): Promise<any> {
+    let user: UserEntity = new UserEntity();
+    let post: PostEnity = new PostEnity();
     user.id = createcommentdto.user;
-    post.id = createcommentdto.post;
-    if (
-      isValidUUID(post.id) &&
-      (await this.postRepository.findOneBy({ id: post.id }))
-    ) {
-      //Them cac truong vao comment
-      if (
-        isValidUUID(user.id) &&
-        (await this.userRepository.findOneBy({ id: user.id }))
-      ) {
+    post.id =createcommentdto.post
+    const comemnt: CommentsEntity = new CommentsEntity();
+    let existsUser = await this.userRepository.findOneBy({ id:  user.id })
+    if (isValidUUID(post.id) &&(existsUser)) {
+       let existsPost = await this.postRepository.findOneBy({ id:  post.id });
+      if (isValidUUID(user.id) &&(existsPost!=null) ) {
+        //gan cho user va post
+        user = existsUser;
+        post = existsPost;
         comemnt.content = createcommentdto.content;
         comemnt.user = user;
+        comemnt.user.avatar=user.avatar;
+        comemnt.user.username=user.username;
         comemnt.post = post;
         await this.commentsRepository.save(comemnt);
         delete comemnt.id;
         delete comemnt.updated;
-        return comemnt;
+        return {
+          comemnt:{
+            post:{
+              id:comemnt.post.id
+            },
+            id:comemnt.id,
+            content:comemnt.content,
+            date:comemnt.createdAt,
+            user:{
+              user_id:comemnt.user.id,
+              username: user.username,
+              avatar:user.avatar
+            }
+          }
+        };
       } else {
-        throw new HttpException('Bạn chưa đang nhập', HttpStatus.BAD_REQUEST);
+        throw new HttpException('Bài post không tồn tại', HttpStatus.BAD_REQUEST);
       }
     } else {
-      throw new HttpException('Bài post không tồn tại', HttpStatus.BAD_REQUEST);
+      throw new HttpException(' Bạn chưa đang nhập', HttpStatus.BAD_REQUEST);
     }
   }
   // Nguoi dung like bai post
-  async UserLikePost(
-    createLikeDTO: CreateLikeDto,
-  ): Promise<DeleteResult | LikeEntity> {
-    const post: PostEnity = new PostEnity();
-    const user: UserEntity = new UserEntity();
+  async UserLikePost(createLikeDTO: CreateLikeDto): Promise<DeleteResult | any> {
+    let post: PostEnity = new PostEnity();
+    let user: UserEntity = new UserEntity();
     const like: LikeEntity = new LikeEntity();
     post.id = createLikeDTO.post;
     user.id = createLikeDTO.user;
-    if (
-      isValidUUID(post.id) &&
-      (await this.postRepository.findOneBy({ id: post.id })) &&
-      isValidUUID(user.id) &&
-      (await this.userRepository.findOneBy({ id: user.id }))
-    ) {
+    const postExists = await this.postRepository.findOneBy({ id: post.id });
+    const userExists = await this.userRepository.findOneBy({ id: user.id });
+    if (isValidUUID(post.id) && userExists &&isValidUUID(user.id)&&postExists) {
       const userLike = await this.likesRepository
-        .createQueryBuilder('like')
-        .where('like.userId = :id and like.postId=:pid', {
+        .createQueryBuilder('like').where('like.userId = :id and like.postId=:pid', {
           id: user.id,
           pid: post.id,
-        })
-        .getOne();
+        }).getOne();
       if (userLike != null) {
-        return await this.likesRepository
-          .createQueryBuilder()
-          .delete()
-          .from('Like')
-          .where('userId = :id and postId=:pid', { id: user.id, pid: post.id })
-          .execute();
+        return await this.likesRepository.createQueryBuilder().delete()
+          .from('Like').where('userId = :id and postId=:pid', { id: user.id, pid: post.id }).execute();
       } else {
+        user =userExists ;
+        post = postExists
         like.user = user;
         like.post = post;
         await this.likesRepository.save(like);
-        delete like.id;
         // delete like.post;
-        return like;
+        return {
+          like:{
+            id:like.id,
+            post:like.post.id,
+            user:like.user.id,            
+            username:user.username,
+            avatar:user.avatar
+          }
+        };
       }
     } else {
       throw new HttpException(
@@ -227,47 +224,48 @@ export class PostinfoService {
   }
 
   //API trả về danh sách những người đã like bài post bất kỳ.
-  async listPostUserLike(postid: string): Promise<LikeEntity[]> {
-    const post: PostEnity = new PostEnity();
-    const itemUser = 5;
-    post.id = postid;
-    let validatePost =
-      isValidUUID(post.id) &&
-      (await this.postRepository.findOneBy({ id: post.id }));
-    if (validatePost) {
-      return await this.likesRepository
+  async listPostUserLike(postid: string): Promise<UserEntity|any> {
+    if(isValidUUID(postid)&& await this.postRepository.findOneBy({ id: postid}))
+    {
+         return await this.likesRepository
         .createQueryBuilder('like')
         .leftJoin('like.user', 'user')
         .leftJoin('like.post', 'post')
-        .select(['user.username', 'user.id', 'post.id'])
-        .where('post.id =:id', { id: post.id })
+        .select(['user.username', 'user.id','user.avatar','post.id','post.title'])
+        .where('post.id =:id', { id: postid})
         .getRawMany();
-    } else {
-      throw new HttpException('Bài post không tồn tại', HttpStatus.BAD_REQUEST);
-    }
+    }else{
+      throw new HttpException("Không tìm thấy bài Post",HttpStatus.BAD_REQUEST);
+   }
   }
 
   //API xóa post
-  async deletePost(postid:string):Promise<any>
+  async deletePost(user,postid:string):Promise<any>
   {
+    // console.log(user.roles.includes('Admin'))
     if(isValidUUID(postid))
     {
-      const postExists = await this.postRepository.findOneBy({ id: postid});
-       if(postExists)
-       {
-        return this.commentsRepository
-        .createQueryBuilder()
-        .delete()
-        .from('comments')
-        .where('id = :id', {id:postid })
-        .execute();;
-       }else{
-          throw new HttpException("Không tìm thấy bài Post",HttpStatus.BAD_REQUEST);
-       }
+      const postExists = await this.postRepository.createQueryBuilder("post")
+      .leftJoinAndSelect("post.user","user").select(['post.id','user.id'])
+      .where("post.id= :id",{id:postid}).getOne();
+      if(postExists){
+      if(user['id']===postExists.user.id||user.roles.includes('Admin')){ 
+           await this.postRepository.createQueryBuilder()
+          .delete().from('post').where('id = :id', {id:postid })
+          .execute();
+          return {
+            mesage: "Delete Post Successfully"
+          }
+         }else{
+          throw new HttpException("Bạn không phải chủ bài post",HttpStatus.BAD_REQUEST);
+         }
+      }else{
+        throw new HttpException("Không tìm thấy bài Post",HttpStatus.BAD_REQUEST);
+      }
+    
     }else{
       throw new HttpException("Không tìm thấy bài Post",HttpStatus.BAD_REQUEST);
     }
-      
      
   }
 

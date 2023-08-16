@@ -6,6 +6,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, UpdateResult } from 'typeorm';
 import { validate as isValidUUID } from 'uuid';
 import * as bcrypt from 'bcrypt';
+import { deleteProperties } from 'src/handler/handler';
+import { PageOptionsDto } from 'src/postinfo/dto/page.dto';
 
 @Injectable()
 export class UsersService {
@@ -60,21 +62,21 @@ export class UsersService {
     
   }
 
-  async ChangePassword(userId: string, oldPassword: string, newPassword: string): Promise<UserEntity> {
-    const user: UserEntity = new UserEntity();
-    let dateNow = new Date();
+  async ChangePassword(userId: string, oldPassword: string, newPassword: string): Promise<any> {
+    let user: UserEntity = new UserEntity();
     if(isValidUUID(userId))
     {
       const userKT = await this.userRepository.findOneBy({ id: userId });
       if (userKT&& await userKT.validatePassword(oldPassword)) {
-        user.id = userId;
-        user.updated = dateNow;
+        user=userKT;
         user.salt = await bcrypt.genSalt();
         user.password = await bcrypt.hash(newPassword,user.salt);
         await this.userRepository.save(user);
-        delete user.password;
-        delete user.salt;
-        return  user;
+        deleteProperties(user,["password","salt","permissions","post","comments"])
+        return {
+          data:user,
+          message:"Đổi mật khẩu thành công "
+        };
       } else {
         throw new BadRequestException('mật khẩu không khớp');
       }
@@ -84,26 +86,23 @@ export class UsersService {
     
   }
 
-  async getAllUsers(page:number):Promise<UserEntity[]>{
+  async getAllUsers(pagedto:PageOptionsDto ):Promise<any>{
 
-    const item:number=5;
-    const lengUser = await this.userRepository.createQueryBuilder().getCount();
-    let totalPager:number;
-    if(lengUser%item==0)
-    {
-      totalPager = (lengUser/item);
-        
-    }else {
-      totalPager = Math.ceil(lengUser/item);
-    }
-    if(page>totalPager)
-    {
-      throw new HttpException("Not found",HttpStatus.NOT_FOUND);
-    }else{
-      return await this.userRepository.createQueryBuilder("users").orderBy("users.id").select(["users.username","users.email","users.id"])
-      .skip(item*(page-1)).take(item)
-      .getMany();
-    }
+    try{
+      const skip = (pagedto.page-1)*pagedto.limit;
+       const data=await this.userRepository.createQueryBuilder('user').select(['user.username','user.email','user.createdAt'])
+     .orderBy(`user.${pagedto.sort}`,pagedto.order)
+     .take(pagedto.limit).skip(skip)
+     .getMany();
+     return {
+       data:data,
+       page: pagedto.page,
+       limt: pagedto.limit,
+     };
+   }catch(e)
+   {
+       throw new HttpException(e.message,HttpStatus.BAD_REQUEST);
+   }
    
   }
 
@@ -131,5 +130,13 @@ export class UsersService {
     }else{
       throw new HttpException("User not found",HttpStatus.BAD_REQUEST);
     }
+  }
+  async uploadAvatarUserById(id:string,avatar:string):Promise<UserEntity>{
+    const user:UserEntity = new UserEntity();
+    user.id=id;
+    user.avatar=avatar;
+    await this.userRepository.save(user)
+    deleteProperties(user,['salt','createdAt','updated','username'])
+    return user;
   }
 }

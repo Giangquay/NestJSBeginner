@@ -8,3 +8,11 @@ export const pick = (object={},key:string[]):any=>{
         return obj;
     },{})
 }
+
+export   function deleteProperties(obj, properties) {
+    for (let prop of properties) {
+      if (obj.hasOwnProperty(prop)) {
+        delete obj[prop];
+      }
+    }
+  }

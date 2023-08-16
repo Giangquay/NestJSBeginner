@@ -1,6 +1,6 @@
 
 import { IsBoolean, IsBooleanString, IsEnum, IsInt, IsNumber, IsOptional, IsString, Max, Min, isNumber } from "class-validator";
-import { Order } from "../enum/common.enum";
+import { Order } from "../../enum/common.enum";
 import { Type,Transform} from "class-transformer";
 
 

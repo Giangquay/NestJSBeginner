@@ -17,5 +17,5 @@ export function  chunk(dataPost,pageDto) {
               prev:prevPage,
               currentpage:parseInt(page)
             }
-         }
+  }
 }

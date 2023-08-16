@@ -10,7 +10,7 @@ export class CommentsEntity extends BaseEntity{
     @Column()
     content: string;
 
-    @ManyToOne(()=>PostEnity,(post)=>post.id)
+    @ManyToOne(()=>PostEnity,(post)=>post.comments,{onDelete: "CASCADE"})
     post:PostEnity;
 
     @ManyToOne(()=>UserEntity,(users)=>users.id)

@@ -5,9 +5,11 @@ import{
   IsInt,
   IsNotEmpty,
   IsString,
+  IsUUID,
   Matches,
   MinLength,
   isEmail,
+  isUUID,
 }from 'class-validator'
 
 

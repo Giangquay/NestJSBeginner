@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Res, Req, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query, Res, Req, UsePipes, ValidationPipe, UseGuards } from '@nestjs/common';
 import { PostinfoService } from './postinfo.service';
 import { CreatePostinfoDto } from './dto/create-postinfo.dto';
 import { UpdatePostinfoDto } from './dto/update-postinfo.dto';
@@ -6,6 +6,12 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { CreateLikeDto } from './dto/create-likepost.dto';
 import { PageOptionsDto  } from './dto/page.dto';
 import { pick } from 'src/handler/handler';
+import { AuthGuard } from '@nestjs/passport';
+import { Request } from 'express';
+// import RoleGuard from 'src/guard/role.guard';
+import { Permission, Role } from 'src/enum/common.enum';
+import RoleGuard from 'src/guard/role.guard';
+import PremissionGuard from 'src/guard/permission.guard';
 @UsePipes(new ValidationPipe({ transform: true}))
 @Controller('post')
 export class PostinfoController {
@@ -29,10 +35,12 @@ export class PostinfoController {
 
   // TODO: Tim kiem bai post theo user bat ky
   @Get("users")
-  findPostByUserAny(@Body() body:{username:string},@Query("page") page:number)
+  @UsePipes(ValidationPipe)
+  findPostByUserAny(@Body() body:{username:string},@Query() pagedto:PageOptionsDto )
   {
-    const name = body.username;
-      return this.postinfoService.findAnyUserPost(name,page);
+    const options = pick(pagedto,['page','limit','sort','order']);
+    const name = body.username;;
+   return this.postinfoService.findAnyUserPost(name,options);
       // return "Tim kiem cac bai post cua user bat ky";
   }
 
@@ -62,15 +70,19 @@ export class PostinfoController {
     return this.postinfoService.listPostUserLike(id);
   }
 
-
-  @Delete(":id")
-  deletePostbyId(@Param("id") id:string)
+  @UseGuards(AuthGuard('jwt'))
+  // @UseGuards(RoleGuard(Role.Admin||Role.User))
+  // @UseGuards(PremissionGuard(Permission.Delete))
+  @Delete("delete/:id")
+  deletePostbyId(@Req() request:Request,@Param("id") postId:string)
   {
-    return this.postinfoService.deletePost(id);
+    return this.postinfoService.deletePost(request.user,postId);
   }
+
 
   @Delete("comments/:id")
   delteCommentbyId(@Param("id") id:string){
     return this.postinfoService.deleteComment(id);
   }
 }
+

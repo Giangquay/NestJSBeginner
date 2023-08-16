@@ -18,9 +18,11 @@ export class PostEnity extends BaseEntity {
     @JoinColumn({name: 'uid'})
     user:UserEntity;
 
-    @OneToMany(()=>CommentsEntity,(comment:CommentsEntity)=>comment.post)
+    @OneToMany(()=>CommentsEntity,(comment:CommentsEntity)=>comment.post,{onDelete: "CASCADE",
+    onUpdate: "CASCADE",})
     comments:CommentsEntity[];
     
-    @OneToMany(()=>LikeEntity,(like:LikeEntity)=>like.post)
+    @OneToMany(()=>LikeEntity,(like:LikeEntity)=>like.post,{onDelete: "CASCADE",
+    onUpdate: "CASCADE",})
     like:LikeEntity[];
 }
